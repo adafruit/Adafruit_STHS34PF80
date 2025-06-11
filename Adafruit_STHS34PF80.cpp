@@ -68,3 +68,119 @@ bool Adafruit_STHS34PF80::begin(uint8_t i2c_addr, TwoWire *wire) {
 
   return true;
 }
+
+/*!
+ * @brief Set the motion detection low-pass filter configuration
+ * @param config The LPF configuration value
+ * @return True if successful, false otherwise
+ */
+bool Adafruit_STHS34PF80::setMotionLowPassFilter(sths34pf80_lpf_config_t config) {
+  Adafruit_BusIO_Register lpf1_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_LPF1, 1);
+  
+  Adafruit_BusIO_RegisterBits lpf_m_bits = Adafruit_BusIO_RegisterBits(
+      &lpf1_reg, 3, 0);
+  
+  return lpf_m_bits.write(config);
+}
+
+/*!
+ * @brief Get the motion detection low-pass filter configuration
+ * @return The current LPF configuration value
+ */
+sths34pf80_lpf_config_t Adafruit_STHS34PF80::getMotionLowPassFilter() {
+  Adafruit_BusIO_Register lpf1_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_LPF1, 1);
+  
+  Adafruit_BusIO_RegisterBits lpf_m_bits = Adafruit_BusIO_RegisterBits(
+      &lpf1_reg, 3, 0);
+  
+  return (sths34pf80_lpf_config_t)lpf_m_bits.read();
+}
+
+/*!
+ * @brief Set the motion and presence detection low-pass filter configuration
+ * @param config The LPF configuration value
+ * @return True if successful, false otherwise
+ */
+bool Adafruit_STHS34PF80::setMotionPresenceLowPassFilter(sths34pf80_lpf_config_t config) {
+  Adafruit_BusIO_Register lpf1_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_LPF1, 1);
+  
+  Adafruit_BusIO_RegisterBits lpf_p_m_bits = Adafruit_BusIO_RegisterBits(
+      &lpf1_reg, 3, 3);
+  
+  return lpf_p_m_bits.write(config);
+}
+
+/*!
+ * @brief Get the motion and presence detection low-pass filter configuration
+ * @return The current LPF configuration value
+ */
+sths34pf80_lpf_config_t Adafruit_STHS34PF80::getMotionPresenceLowPassFilter() {
+  Adafruit_BusIO_Register lpf1_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_LPF1, 1);
+  
+  Adafruit_BusIO_RegisterBits lpf_p_m_bits = Adafruit_BusIO_RegisterBits(
+      &lpf1_reg, 3, 3);
+  
+  return (sths34pf80_lpf_config_t)lpf_p_m_bits.read();
+}
+
+/*!
+ * @brief Set the presence detection low-pass filter configuration
+ * @param config The LPF configuration value
+ * @return True if successful, false otherwise
+ */
+bool Adafruit_STHS34PF80::setPresenceLowPassFilter(sths34pf80_lpf_config_t config) {
+  Adafruit_BusIO_Register lpf2_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_LPF2, 1);
+  
+  Adafruit_BusIO_RegisterBits lpf_p_bits = Adafruit_BusIO_RegisterBits(
+      &lpf2_reg, 3, 3);
+  
+  return lpf_p_bits.write(config);
+}
+
+/*!
+ * @brief Get the presence detection low-pass filter configuration
+ * @return The current LPF configuration value
+ */
+sths34pf80_lpf_config_t Adafruit_STHS34PF80::getPresenceLowPassFilter() {
+  Adafruit_BusIO_Register lpf2_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_LPF2, 1);
+  
+  Adafruit_BusIO_RegisterBits lpf_p_bits = Adafruit_BusIO_RegisterBits(
+      &lpf2_reg, 3, 3);
+  
+  return (sths34pf80_lpf_config_t)lpf_p_bits.read();
+}
+
+/*!
+ * @brief Set the ambient temperature shock detection low-pass filter configuration
+ * @param config The LPF configuration value
+ * @return True if successful, false otherwise
+ */
+bool Adafruit_STHS34PF80::setTemperatureLowPassFilter(sths34pf80_lpf_config_t config) {
+  Adafruit_BusIO_Register lpf2_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_LPF2, 1);
+  
+  Adafruit_BusIO_RegisterBits lpf_a_t_bits = Adafruit_BusIO_RegisterBits(
+      &lpf2_reg, 3, 0);
+  
+  return lpf_a_t_bits.write(config);
+}
+
+/*!
+ * @brief Get the ambient temperature shock detection low-pass filter configuration
+ * @return The current LPF configuration value
+ */
+sths34pf80_lpf_config_t Adafruit_STHS34PF80::getTemperatureLowPassFilter() {
+  Adafruit_BusIO_Register lpf2_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_LPF2, 1);
+  
+  Adafruit_BusIO_RegisterBits lpf_a_t_bits = Adafruit_BusIO_RegisterBits(
+      &lpf2_reg, 3, 0);
+  
+  return (sths34pf80_lpf_config_t)lpf_a_t_bits.read();
+}

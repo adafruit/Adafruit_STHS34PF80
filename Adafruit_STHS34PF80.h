@@ -53,6 +53,19 @@
 #define STHS34PF80_REG_TAMB_SHOCK_H 0x3F ///< Ambient shock detection MSB register
 
 /*!
+ * @brief Low-pass filter configuration options
+ */
+typedef enum {
+  STHS34PF80_LPF_ODR_DIV_9 = 0x00,   ///< ODR/9
+  STHS34PF80_LPF_ODR_DIV_20 = 0x01,  ///< ODR/20
+  STHS34PF80_LPF_ODR_DIV_50 = 0x02,  ///< ODR/50
+  STHS34PF80_LPF_ODR_DIV_100 = 0x03, ///< ODR/100
+  STHS34PF80_LPF_ODR_DIV_200 = 0x04, ///< ODR/200
+  STHS34PF80_LPF_ODR_DIV_400 = 0x05, ///< ODR/400
+  STHS34PF80_LPF_ODR_DIV_800 = 0x06, ///< ODR/800
+} sths34pf80_lpf_config_t;
+
+/*!
  * @brief Class that stores state and functions for interacting with the STHS34PF80
  */
 class Adafruit_STHS34PF80 {
@@ -61,6 +74,15 @@ public:
   ~Adafruit_STHS34PF80();
 
   bool begin(uint8_t i2c_addr = STHS34PF80_DEFAULT_ADDR, TwoWire *wire = &Wire);
+
+  bool setMotionLowPassFilter(sths34pf80_lpf_config_t config);
+  sths34pf80_lpf_config_t getMotionLowPassFilter();
+  bool setMotionPresenceLowPassFilter(sths34pf80_lpf_config_t config);
+  sths34pf80_lpf_config_t getMotionPresenceLowPassFilter();
+  bool setPresenceLowPassFilter(sths34pf80_lpf_config_t config);
+  sths34pf80_lpf_config_t getPresenceLowPassFilter();
+  bool setTemperatureLowPassFilter(sths34pf80_lpf_config_t config);
+  sths34pf80_lpf_config_t getTemperatureLowPassFilter();
 
 private:
   Adafruit_I2CDevice *i2c_dev;
