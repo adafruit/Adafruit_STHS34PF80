@@ -52,6 +52,10 @@
 #define STHS34PF80_REG_TAMB_SHOCK_L 0x3E ///< Ambient shock detection LSB register
 #define STHS34PF80_REG_TAMB_SHOCK_H 0x3F ///< Ambient shock detection MSB register
 
+#define STHS34PF80_PRES_FLAG 0x04      ///< Presence detection flag
+#define STHS34PF80_MOT_FLAG 0x02       ///< Motion detection flag  
+#define STHS34PF80_TAMB_SHOCK_FLAG 0x01 ///< Ambient temperature shock flag
+
 /*!
  * @brief Low-pass filter configuration options
  */
@@ -64,6 +68,54 @@ typedef enum {
   STHS34PF80_LPF_ODR_DIV_400 = 0x05, ///< ODR/400
   STHS34PF80_LPF_ODR_DIV_800 = 0x06, ///< ODR/800
 } sths34pf80_lpf_config_t;
+
+/*!
+ * @brief Ambient temperature averaging options
+ */
+typedef enum {
+  STHS34PF80_AVG_T_8 = 0x00,  ///< 8 samples (default)
+  STHS34PF80_AVG_T_4 = 0x01,  ///< 4 samples
+  STHS34PF80_AVG_T_2 = 0x02,  ///< 2 samples
+  STHS34PF80_AVG_T_1 = 0x03,  ///< 1 sample
+} sths34pf80_avg_t_t;
+
+/*!
+ * @brief Object temperature averaging options
+ */
+typedef enum {
+  STHS34PF80_AVG_TMOS_2 = 0x00,    ///< 2 samples
+  STHS34PF80_AVG_TMOS_8 = 0x01,    ///< 8 samples
+  STHS34PF80_AVG_TMOS_32 = 0x02,   ///< 32 samples
+  STHS34PF80_AVG_TMOS_128 = 0x03,  ///< 128 samples (default)
+  STHS34PF80_AVG_TMOS_256 = 0x04,  ///< 256 samples
+  STHS34PF80_AVG_TMOS_512 = 0x05,  ///< 512 samples
+  STHS34PF80_AVG_TMOS_1024 = 0x06, ///< 1024 samples
+  STHS34PF80_AVG_TMOS_2048 = 0x07, ///< 2048 samples
+} sths34pf80_avg_tmos_t;
+
+/*!
+ * @brief Output data rate options
+ */
+typedef enum {
+  STHS34PF80_ODR_POWER_DOWN = 0x00, ///< Power-down mode
+  STHS34PF80_ODR_0_25_HZ = 0x01,    ///< 0.25 Hz
+  STHS34PF80_ODR_0_5_HZ = 0x02,     ///< 0.5 Hz
+  STHS34PF80_ODR_1_HZ = 0x03,       ///< 1 Hz
+  STHS34PF80_ODR_2_HZ = 0x04,       ///< 2 Hz
+  STHS34PF80_ODR_4_HZ = 0x05,       ///< 4 Hz
+  STHS34PF80_ODR_8_HZ = 0x06,       ///< 8 Hz
+  STHS34PF80_ODR_15_HZ = 0x07,      ///< 15 Hz
+  STHS34PF80_ODR_30_HZ = 0x08,      ///< 30 Hz (1xxx)
+} sths34pf80_odr_t;
+
+/*!
+ * @brief Interrupt enable signal options
+ */
+typedef enum {
+  STHS34PF80_INT_HIGH_Z = 0x00,  ///< High-Z (disabled)
+  STHS34PF80_INT_DRDY = 0x01,    ///< Data ready
+  STHS34PF80_INT_OR = 0x02,      ///< INT_OR (function flags)
+} sths34pf80_int_signal_t;
 
 /*!
  * @brief Class that stores state and functions for interacting with the STHS34PF80
@@ -83,6 +135,34 @@ public:
   sths34pf80_lpf_config_t getPresenceLowPassFilter();
   bool setTemperatureLowPassFilter(sths34pf80_lpf_config_t config);
   sths34pf80_lpf_config_t getTemperatureLowPassFilter();
+
+  bool setAmbTempAveraging(sths34pf80_avg_t_t config);
+  sths34pf80_avg_t_t getAmbTempAveraging();
+  bool setObjAveraging(sths34pf80_avg_tmos_t config);
+  sths34pf80_avg_tmos_t getObjAveraging();
+
+  bool setWideGainMode(bool wide_mode);
+  bool getWideGainMode();
+
+  bool setSensitivity(int8_t sensitivity);
+  int8_t getSensitivity();
+
+  bool setBlockDataUpdate(bool enable);
+  bool getBlockDataUpdate();
+  bool setOutputDataRate(sths34pf80_odr_t odr);
+  sths34pf80_odr_t getOutputDataRate();
+
+  bool rebootOTPmemory();
+  bool enableEmbeddedFuncPage(bool enable);
+  bool triggerOneshot();
+
+  bool setIntPolarity(bool active_low);
+  bool setIntOpenDrain(bool open_drain);
+  bool setIntLatched(bool latched);
+  bool setIntMask(uint8_t mask);
+  uint8_t getIntMask();
+  bool setIntSignal(sths34pf80_int_signal_t signal);
+  sths34pf80_int_signal_t getIntSignal();
 
 private:
   Adafruit_I2CDevice *i2c_dev;

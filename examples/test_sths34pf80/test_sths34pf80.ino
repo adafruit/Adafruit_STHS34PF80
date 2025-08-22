@@ -93,6 +93,159 @@ void setup() {
   Serial.print("  Current setting: ");
   printLPFSetting(sths.getTemperatureLowPassFilter());
   Serial.println();
+
+  // Test Ambient Temperature Averaging (default: 8 samples)
+  Serial.println(F("\nAmbient Temperature Averaging:"));
+  if (sths.setAmbTempAveraging(STHS34PF80_AVG_T_8)) {
+    Serial.println(F("  Success"));
+  } else {
+    Serial.println(F("  Failed"));
+  }
+  Serial.print(F("  Current: "));
+  switch (sths.getAmbTempAveraging()) {
+    case STHS34PF80_AVG_T_8: Serial.println(F("8 samples")); break;
+    case STHS34PF80_AVG_T_4: Serial.println(F("4 samples")); break;
+    case STHS34PF80_AVG_T_2: Serial.println(F("2 samples")); break;
+    case STHS34PF80_AVG_T_1: Serial.println(F("1 sample")); break;
+    default: Serial.println(F("Unknown")); break;
+  }
+
+  // Test Object Temperature Averaging (default: 128 samples)
+  Serial.println(F("\nObject Temperature Averaging:"));
+  if (sths.setObjAveraging(STHS34PF80_AVG_TMOS_128)) {
+    Serial.println(F("  Success"));
+  } else {
+    Serial.println(F("  Failed"));
+  }
+  Serial.print(F("  Current: "));
+  switch (sths.getObjAveraging()) {
+    case STHS34PF80_AVG_TMOS_2: Serial.println(F("2 samples")); break;
+    case STHS34PF80_AVG_TMOS_8: Serial.println(F("8 samples")); break;
+    case STHS34PF80_AVG_TMOS_32: Serial.println(F("32 samples")); break;
+    case STHS34PF80_AVG_TMOS_128: Serial.println(F("128 samples")); break;
+    case STHS34PF80_AVG_TMOS_256: Serial.println(F("256 samples")); break;
+    case STHS34PF80_AVG_TMOS_512: Serial.println(F("512 samples")); break;
+    case STHS34PF80_AVG_TMOS_1024: Serial.println(F("1024 samples")); break;
+    case STHS34PF80_AVG_TMOS_2048: Serial.println(F("2048 samples")); break;
+    default: Serial.println(F("Unknown")); break;
+  }
+
+  // Test Wide Gain Mode (default: false - default gain mode)
+  Serial.println(F("\nWide Gain Mode:"));
+  if (sths.setWideGainMode(false)) {
+    Serial.println(F("  Success"));
+  } else {
+    Serial.println(F("  Failed"));
+  }
+  Serial.print(F("  Current: "));
+  if (sths.getWideGainMode()) {
+    Serial.println(F("Wide mode"));
+  } else {
+    Serial.println(F("Default gain mode"));
+  }
+
+  // Test Sensitivity (factory calibrated - read only)
+  Serial.println(F("\nSensitivity:"));
+  // sths.setSensitivity(0); // Commented out - factory calibrated value
+  Serial.print(F("  Current: "));
+  Serial.println(sths.getSensitivity());
+
+  // Test Block Data Update (default: false)
+  Serial.println(F("\nBlock Data Update:"));
+  if (sths.setBlockDataUpdate(false)) {
+    Serial.println(F("  Success"));
+  } else {
+    Serial.println(F("  Failed"));
+  }
+  Serial.print(F("  Current: "));
+  if (sths.getBlockDataUpdate()) {
+    Serial.println(F("Enabled"));
+  } else {
+    Serial.println(F("Disabled"));
+  }
+
+  // Test Output Data Rate (default: power-down)
+  Serial.println(F("\nOutput Data Rate:"));
+  if (sths.setOutputDataRate(STHS34PF80_ODR_POWER_DOWN)) {
+    Serial.println(F("  Success"));
+  } else {
+    Serial.println(F("  Failed"));
+  }
+  Serial.print(F("  Current: "));
+  switch (sths.getOutputDataRate()) {
+    case STHS34PF80_ODR_POWER_DOWN: Serial.println(F("Power-down")); break;
+    case STHS34PF80_ODR_0_25_HZ: Serial.println(F("0.25 Hz")); break;
+    case STHS34PF80_ODR_0_5_HZ: Serial.println(F("0.5 Hz")); break;
+    case STHS34PF80_ODR_1_HZ: Serial.println(F("1 Hz")); break;
+    case STHS34PF80_ODR_2_HZ: Serial.println(F("2 Hz")); break;
+    case STHS34PF80_ODR_4_HZ: Serial.println(F("4 Hz")); break;
+    case STHS34PF80_ODR_8_HZ: Serial.println(F("8 Hz")); break;
+    case STHS34PF80_ODR_15_HZ: Serial.println(F("15 Hz")); break;
+    case STHS34PF80_ODR_30_HZ: Serial.println(F("30 Hz")); break;
+    default: Serial.println(F("Unknown")); break;
+  }
+
+  // Test CTRL2 functions (actions only, no getters for these)
+  Serial.println(F("\nEmbedded Function Page:"));
+  if (sths.enableEmbeddedFuncPage(false)) {
+    Serial.println(F("  Success"));
+  } else {
+    Serial.println(F("  Failed"));
+  }
+
+  Serial.println(F("\nTrigger One-shot:"));
+  if (sths.triggerOneshot()) {
+    Serial.println(F("  Success"));
+  } else {
+    Serial.println(F("  Failed"));
+  }
+
+  Serial.println(F("\nReboot OTP Memory:"));
+  if (sths.rebootOTPmemory()) {
+    Serial.println(F("  Success"));
+  } else {
+    Serial.println(F("  Failed"));
+  }
+
+  // Configure interrupts: latched, push-pull, active high, all events
+  Serial.println(F("\nInterrupt Configuration:"));
+  sths.setIntPolarity(false);  // active high
+  sths.setIntOpenDrain(false); // push-pull
+  sths.setIntLatched(true);    // latched mode
+  
+  // Enable interrupts for all three events
+  uint8_t mask = STHS34PF80_PRES_FLAG | STHS34PF80_MOT_FLAG | STHS34PF80_TAMB_SHOCK_FLAG;
+  sths.setIntMask(mask);
+  
+  // Set interrupt signal to INT_OR (function flags)
+  sths.setIntSignal(STHS34PF80_INT_OR);
+
+  // Print current interrupt mask status
+  Serial.print(F("  Current interrupt mask: 0x"));
+  Serial.print(sths.getIntMask(), HEX);
+  Serial.print(F(" ("));
+  uint8_t currentMask = sths.getIntMask();
+  if (currentMask & STHS34PF80_PRES_FLAG) Serial.print(F("PRES "));
+  if (currentMask & STHS34PF80_MOT_FLAG) Serial.print(F("MOT "));
+  if (currentMask & STHS34PF80_TAMB_SHOCK_FLAG) Serial.print(F("TAMB_SHOCK "));
+  Serial.println(F(")"));
+
+  // Print current interrupt signal setting
+  Serial.print(F("  Current interrupt signal: "));
+  switch (sths.getIntSignal()) {
+    case STHS34PF80_INT_HIGH_Z:
+      Serial.println(F("High-Z (disabled)"));
+      break;
+    case STHS34PF80_INT_DRDY:
+      Serial.println(F("Data ready"));
+      break;
+    case STHS34PF80_INT_OR:
+      Serial.println(F("INT_OR (function flags)"));
+      break;
+    default:
+      Serial.println(F("Unknown"));
+      break;
+  }
 }
 
 void loop() {
