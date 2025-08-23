@@ -63,6 +63,10 @@ bool Adafruit_STHS34PF80::begin(uint8_t i2c_addr, TwoWire *wire) {
     return false;
   }
 
+  if (!reset()) {
+    return false;
+  }
+
   // Apply recommended default settings
   if (!setObjAveraging(STHS34PF80_AVG_TMOS_32)) {
     return false;
@@ -96,6 +100,27 @@ bool Adafruit_STHS34PF80::isConnected() {
       i2c_dev, STHS34PF80_REG_WHO_AM_I, 1);
 
   return chip_id.read() == 0xD3;
+}
+
+/*!
+ * @brief Reset the sensor completely
+ * @return True if successful, false otherwise
+ */
+bool Adafruit_STHS34PF80::reset() {
+  // Reboot OTP memory
+  if (!rebootOTPmemory()) {
+    return false;
+  }
+
+  // Wait for sensor reset to complete
+  delay(5);
+
+  // Reset the internal algorithm
+  if (!algorithmReset()) {
+    return false;
+  }
+
+  return true;
 }
 
 /*!

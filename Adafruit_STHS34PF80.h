@@ -133,6 +133,7 @@ public:
 
   bool begin(uint8_t i2c_addr = STHS34PF80_DEFAULT_ADDR, TwoWire *wire = &Wire);
   bool isConnected();
+  bool reset();
 
   bool setMotionLowPassFilter(sths34pf80_lpf_config_t config);
   sths34pf80_lpf_config_t getMotionLowPassFilter();
