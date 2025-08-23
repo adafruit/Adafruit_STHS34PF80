@@ -59,14 +59,43 @@ bool Adafruit_STHS34PF80::begin(uint8_t i2c_addr, TwoWire *wire) {
     return false;
   }
 
-  Adafruit_BusIO_Register chip_id = Adafruit_BusIO_Register(
-      i2c_dev, STHS34PF80_REG_WHO_AM_I, 1);
+  if (!isConnected()) {
+    return false;
+  }
 
-  if (chip_id.read() != 0xD3) {
+  // Apply recommended default settings
+  if (!setObjAveraging(STHS34PF80_AVG_TMOS_32)) {
+    return false;
+  }
+  
+  if (!setAmbTempAveraging(STHS34PF80_AVG_T_8)) {
+    return false;
+  }
+  
+  if (!setBlockDataUpdate(true)) {
+    return false;
+  }
+  
+  if (!setOutputDataRate(STHS34PF80_ODR_1_HZ)) {
     return false;
   }
 
   return true;
+}
+
+/*!
+ * @brief Check if the sensor is connected by reading device ID
+ * @return True if device ID matches expected value (0xD3), false otherwise
+ */
+bool Adafruit_STHS34PF80::isConnected() {
+  if (!i2c_dev) {
+    return false;
+  }
+
+  Adafruit_BusIO_Register chip_id = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_WHO_AM_I, 1);
+
+  return chip_id.read() == 0xD3;
 }
 
 /*!
@@ -325,18 +354,89 @@ bool Adafruit_STHS34PF80::getBlockDataUpdate() {
 }
 
 /*!
- * @brief Set output data rate configuration
+ * @brief Set output data rate configuration with validation
+ * Ported from: sths34pf80_tmos_odr_set
  * @param odr The output data rate value
  * @return True if successful, false otherwise
  */
 bool Adafruit_STHS34PF80::setOutputDataRate(sths34pf80_odr_t odr) {
-  Adafruit_BusIO_Register ctrl1_reg = Adafruit_BusIO_Register(
-      i2c_dev, STHS34PF80_REG_CTRL1, 1);
-  
-  Adafruit_BusIO_RegisterBits odr_bits = Adafruit_BusIO_RegisterBits(
-      &ctrl1_reg, 4, 0);
-  
-  return odr_bits.write(odr);
+  // sths34pf80_ctrl1_t ctrl1;
+  // sths34pf80_avg_trim_t avg_trim;
+  // sths34pf80_tmos_odr_t max_odr = STHS34PF80_TMOS_ODR_AT_30Hz;
+  // int32_t ret;
+  if (!i2c_dev) {
+    return false;
+  }
+
+  sths34pf80_odr_t max_odr = STHS34PF80_ODR_30_HZ;
+  sths34pf80_odr_t current_odr = getOutputDataRate();
+
+  // ret = sths34pf80_read_reg(ctx, STHS34PF80_CTRL1, (uint8_t *)&ctrl1, 1);
+  // if (ret == 0)
+  // {
+  //   ret = sths34pf80_read_reg(ctx, STHS34PF80_AVG_TRIM, (uint8_t *)&avg_trim, 1);
+  sths34pf80_avg_tmos_t avg_tmos = getObjAveraging();
+
+  //   switch(avg_trim.avg_tmos)
+  //   {
+  switch(avg_tmos) {
+    //     default:
+    //     case STHS34PF80_AVG_TMOS_2:
+    //     case STHS34PF80_AVG_TMOS_8:
+    //     case STHS34PF80_AVG_TMOS_32:
+    //       max_odr = STHS34PF80_TMOS_ODR_AT_30Hz;
+    //       break;
+    default:
+    case STHS34PF80_AVG_TMOS_2:
+    case STHS34PF80_AVG_TMOS_8:
+    case STHS34PF80_AVG_TMOS_32:
+      max_odr = STHS34PF80_ODR_30_HZ;
+      break;
+    //     case STHS34PF80_AVG_TMOS_128:
+    //       max_odr = STHS34PF80_TMOS_ODR_AT_8Hz;
+    //       break;
+    case STHS34PF80_AVG_TMOS_128:
+      max_odr = STHS34PF80_ODR_8_HZ;
+      break;
+    //     case STHS34PF80_AVG_TMOS_256:
+    //       max_odr = STHS34PF80_TMOS_ODR_AT_4Hz;
+    //       break;
+    case STHS34PF80_AVG_TMOS_256:
+      max_odr = STHS34PF80_ODR_4_HZ;
+      break;
+    //     case STHS34PF80_AVG_TMOS_512:
+    //       max_odr = STHS34PF80_TMOS_ODR_AT_2Hz;
+    //       break;
+    case STHS34PF80_AVG_TMOS_512:
+      max_odr = STHS34PF80_ODR_2_HZ;
+      break;
+    //     case STHS34PF80_AVG_TMOS_1024:
+    //       max_odr = STHS34PF80_TMOS_ODR_AT_1Hz;
+    //       break;
+    case STHS34PF80_AVG_TMOS_1024:
+      max_odr = STHS34PF80_ODR_1_HZ;
+      break;
+    //     case STHS34PF80_AVG_TMOS_2048:
+    //       max_odr = STHS34PF80_TMOS_ODR_AT_0Hz50;
+    //       break;
+    case STHS34PF80_AVG_TMOS_2048:
+      max_odr = STHS34PF80_ODR_0_5_HZ;
+      break;
+  }
+
+  // if (ret == 0)
+  // {
+  //   if (val > max_odr)
+  //   {
+  //     return -1;
+  //   }
+  if (odr > max_odr) {
+    return false; // Requested ODR exceeds maximum for current averaging setting
+  }
+
+  //   ret = sths34pf80_tmos_odr_check_safe_set(ctx, ctrl1, (uint8_t)val);
+  // }
+  return safeSetOutputDataRate(current_odr, odr);
 }
 
 /*!
@@ -497,4 +597,326 @@ sths34pf80_int_signal_t Adafruit_STHS34PF80::getIntSignal() {
       &ctrl3_reg, 2, 0);
   
   return (sths34pf80_int_signal_t)ien_bits.read();
+}
+
+/*!
+ * @brief Check if new data is ready
+ * @return True if new data is available, false otherwise
+ */
+bool Adafruit_STHS34PF80::isDataReady() {
+  Adafruit_BusIO_Register status_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_STATUS, 1);
+  
+  Adafruit_BusIO_RegisterBits drdy_bit = Adafruit_BusIO_RegisterBits(
+      &status_reg, 1, 2);
+  
+  return drdy_bit.read() == 1;
+}
+
+/*!
+ * @brief Check if presence detection flag is set
+ * @return True if presence is detected, false otherwise
+ */
+bool Adafruit_STHS34PF80::isPresence() {
+  Adafruit_BusIO_Register func_status_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_FUNC_STATUS, 1);
+  
+  Adafruit_BusIO_RegisterBits pres_flag_bit = Adafruit_BusIO_RegisterBits(
+      &func_status_reg, 1, 2);
+  
+  return pres_flag_bit.read() == 1;
+}
+
+/*!
+ * @brief Check if motion detection flag is set
+ * @return True if motion is detected, false otherwise
+ */
+bool Adafruit_STHS34PF80::isMotion() {
+  Adafruit_BusIO_Register func_status_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_FUNC_STATUS, 1);
+  
+  Adafruit_BusIO_RegisterBits mot_flag_bit = Adafruit_BusIO_RegisterBits(
+      &func_status_reg, 1, 1);
+  
+  return mot_flag_bit.read() == 1;
+}
+
+/*!
+ * @brief Check if ambient temperature shock flag is set
+ * @return True if temperature shock is detected, false otherwise
+ */
+bool Adafruit_STHS34PF80::isTempShock() {
+  Adafruit_BusIO_Register func_status_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_FUNC_STATUS, 1);
+  
+  Adafruit_BusIO_RegisterBits tamb_shock_flag_bit = Adafruit_BusIO_RegisterBits(
+      &func_status_reg, 1, 0);
+  
+  return tamb_shock_flag_bit.read() == 1;
+}
+
+/*!
+ * @brief Read object temperature raw value
+ * @return 16-bit signed object temperature value
+ */
+int16_t Adafruit_STHS34PF80::readObjectTemperature() {
+  Adafruit_BusIO_Register tobj_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_TOBJECT_L, 2, LSBFIRST);
+  
+  return (int16_t)tobj_reg.read();
+}
+
+/*!
+ * @brief Read ambient temperature in degrees Celsius
+ * @return Ambient temperature in degrees Celsius
+ */
+float Adafruit_STHS34PF80::readAmbientTemperature() {
+  Adafruit_BusIO_Register tamb_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_TAMBIENT_L, 2, LSBFIRST);
+  
+  int16_t raw_temp = (int16_t)tamb_reg.read();
+  return raw_temp / 100.0f;
+}
+
+/*!
+ * @brief Read compensated object temperature raw value
+ * @return 16-bit signed compensated object temperature value
+ */
+int16_t Adafruit_STHS34PF80::readCompensatedObjectTemperature() {
+  Adafruit_BusIO_Register tobj_comp_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_TOBJ_COMP_L, 2, LSBFIRST);
+  
+  return (int16_t)tobj_comp_reg.read();
+}
+
+/*!
+ * @brief Read presence detection raw value
+ * @return 16-bit signed presence detection value
+ */
+int16_t Adafruit_STHS34PF80::readPresence() {
+  Adafruit_BusIO_Register tpres_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_TPRESENCE_L, 2, LSBFIRST);
+  
+  return (int16_t)tpres_reg.read();
+}
+
+/*!
+ * @brief Read motion detection raw value
+ * @return 16-bit signed motion detection value
+ */
+int16_t Adafruit_STHS34PF80::readMotion() {
+  Adafruit_BusIO_Register tmot_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_TMOTION_L, 2, LSBFIRST);
+  
+  return (int16_t)tmot_reg.read();
+}
+
+/*!
+ * @brief Read ambient temperature shock detection raw value
+ * @return 16-bit signed ambient temperature shock detection value
+ */
+int16_t Adafruit_STHS34PF80::readTempShock() {
+  Adafruit_BusIO_Register tamb_shock_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_TAMB_SHOCK_L, 2, LSBFIRST);
+  
+  return (int16_t)tamb_shock_reg.read();
+}
+
+/*!
+ * @brief Write data to embedded function registers
+ * Ported from: sths34pf80_func_cfg_write
+ * @param addr Embedded function register address
+ * @param data Pointer to data to write
+ * @param len Number of bytes to write
+ * @return True if successful, false otherwise
+ */
+bool Adafruit_STHS34PF80::writeEmbeddedFunction(uint8_t addr, uint8_t *data, uint8_t len) {
+  // sths34pf80_ctrl1_t ctrl1;
+  // uint8_t odr;
+  // sths34pf80_page_rw_t page_rw = {0};
+  // int32_t ret;
+  // uint8_t i;
+  if (!i2c_dev) {
+    return false;
+  }
+
+  // /* Save current odr and enter PD mode */
+  // ret = sths34pf80_read_reg(ctx, STHS34PF80_CTRL1, (uint8_t *)&ctrl1, 1);
+  // odr = ctrl1.odr;
+  // ret += sths34pf80_tmos_odr_check_safe_set(ctx, ctrl1, 0);
+  sths34pf80_odr_t current_odr = getOutputDataRate();
+  if (!safeSetOutputDataRate(current_odr, STHS34PF80_ODR_POWER_DOWN)) {
+    return false;
+  }
+
+  // /* Enable access to embedded functions register */
+  // ret += sths34pf80_mem_bank_set(ctx, STHS34PF80_EMBED_FUNC_MEM_BANK);
+  if (!enableEmbeddedFuncPage(true)) {
+    return false;
+  }
+
+  // /* Enable write mode */
+  // page_rw.func_cfg_write = 1;
+  // ret += sths34pf80_write_reg(ctx, STHS34PF80_PAGE_RW, (uint8_t *)&page_rw, 1);
+  Adafruit_BusIO_Register page_rw_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_PAGE_RW, 1);
+  Adafruit_BusIO_RegisterBits func_cfg_write_bit = Adafruit_BusIO_RegisterBits(
+      &page_rw_reg, 1, 6);
+  if (!func_cfg_write_bit.write(1)) {
+    enableEmbeddedFuncPage(false);
+    safeSetOutputDataRate(STHS34PF80_ODR_POWER_DOWN, current_odr);
+    return false;
+  }
+
+  // /* Select register address (it will autoincrement after each write) */
+  // ret += sths34pf80_write_reg(ctx, STHS34PF80_FUNC_CFG_ADDR, &addr, 1);
+  Adafruit_BusIO_Register func_cfg_addr_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_FUNC_CFG_ADDR, 1);
+  if (!func_cfg_addr_reg.write(addr)) {
+    func_cfg_write_bit.write(0);
+    enableEmbeddedFuncPage(false);
+    safeSetOutputDataRate(STHS34PF80_ODR_POWER_DOWN, current_odr);
+    return false;
+  }
+
+  // /* Write data */
+  // for (i = 0; i < len; i++) {
+  //   ret += sths34pf80_write_reg(ctx, STHS34PF80_FUNC_CFG_DATA, &data[i], 1);
+  // }
+  Adafruit_BusIO_Register func_cfg_data_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_FUNC_CFG_DATA, 1);
+  for (uint8_t i = 0; i < len; i++) {
+    if (!func_cfg_data_reg.write(data[i])) {
+      func_cfg_write_bit.write(0);
+      enableEmbeddedFuncPage(false);
+      safeSetOutputDataRate(STHS34PF80_ODR_POWER_DOWN, current_odr);
+      return false;
+    }
+  }
+
+  // /* Disable write mode */
+  // page_rw.func_cfg_write = 0;
+  // ret += sths34pf80_write_reg(ctx, STHS34PF80_PAGE_RW, (uint8_t *)&page_rw, 1);
+  if (!func_cfg_write_bit.write(0)) {
+    enableEmbeddedFuncPage(false);
+    safeSetOutputDataRate(STHS34PF80_ODR_POWER_DOWN, current_odr);
+    return false;
+  }
+
+  // /* Disable access to embedded functions register */
+  // ret += sths34pf80_mem_bank_set(ctx, STHS34PF80_MAIN_MEM_BANK);
+  if (!enableEmbeddedFuncPage(false)) {
+    safeSetOutputDataRate(STHS34PF80_ODR_POWER_DOWN, current_odr);
+    return false;
+  }
+
+  // /* Restore odr */
+  // ret += sths34pf80_tmos_odr_check_safe_set(ctx, ctrl1, odr);
+  if (!safeSetOutputDataRate(STHS34PF80_ODR_POWER_DOWN, current_odr)) {
+    return false;
+  }
+
+  // return ret;
+  return true;
+}
+
+/*!
+ * @brief Algorithm reset procedure
+ * Ported from: sths34pf80_algo_reset
+ * @return True if successful, false otherwise
+ */
+bool Adafruit_STHS34PF80::algorithmReset() {
+  // tmp = 1;
+  // ret = sths34pf80_func_cfg_write(ctx, STHS34PF80_RESET_ALGO, &tmp, 1);
+  uint8_t reset_value = 1;
+  return writeEmbeddedFunction(STHS34PF80_EMBEDDED_RESET_ALGO, &reset_value, 1);
+}
+
+/*!
+ * @brief Safe ODR setting with proper algorithm reset and power-down procedures
+ * Ported from: sths34pf80_tmos_odr_check_safe_set
+ * @param current_odr The current output data rate
+ * @param new_odr The new output data rate to set
+ * @return True if successful, false otherwise
+ */
+bool Adafruit_STHS34PF80::safeSetOutputDataRate(sths34pf80_odr_t current_odr, sths34pf80_odr_t new_odr) {
+  // sths34pf80_func_status_t func_status;
+  // sths34pf80_tmos_drdy_status_t status;
+  // int32_t ret = 0;
+  if (!i2c_dev) {
+    return false;
+  }
+  
+  Adafruit_BusIO_Register ctrl1_reg = Adafruit_BusIO_Register(
+      i2c_dev, STHS34PF80_REG_CTRL1, 1);
+  
+  Adafruit_BusIO_RegisterBits odr_bits = Adafruit_BusIO_RegisterBits(
+      &ctrl1_reg, 4, 0);
+  
+  // if (odr_new > 0U) {
+  if (new_odr > STHS34PF80_ODR_POWER_DOWN) {
+    /*
+     * Do a clean reset algo procedure everytime odr is changed to an
+     * operative state.
+     */
+    // ctrl1.odr = 0;
+    // ret = sths34pf80_write_reg(ctx, STHS34PF80_CTRL1, (uint8_t *)&ctrl1, 1);
+    if (!odr_bits.write(STHS34PF80_ODR_POWER_DOWN)) {
+      return false;
+    }
+
+    // ret += sths34pf80_algo_reset(ctx);
+    if (!algorithmReset()) {
+      return false;
+    }
+    
+  } else {
+    /* if we need to go to power-down from an operative state
+     * perform the safe power-down.
+     */
+    // if ((uint8_t)ctrl1.odr > 0U) {
+    if (current_odr > STHS34PF80_ODR_POWER_DOWN) {
+      /* reset the DRDY bit */
+      // ret = sths34pf80_read_reg(ctx, STHS34PF80_FUNC_STATUS, (uint8_t *)&func_status, 1);
+      Adafruit_BusIO_Register func_status_reg = Adafruit_BusIO_Register(
+          i2c_dev, STHS34PF80_REG_FUNC_STATUS, 1);
+      func_status_reg.read(); // Reading clears the DRDY bit
+      
+      /* wait DRDY bit go to '1' */
+      // do {
+      //   ret += sths34pf80_tmos_drdy_status_get(ctx, &status);
+      // } while (status.drdy != 0U);
+      Adafruit_BusIO_Register status_reg = Adafruit_BusIO_Register(
+          i2c_dev, STHS34PF80_REG_STATUS, 1);
+      
+      Adafruit_BusIO_RegisterBits drdy_bit = Adafruit_BusIO_RegisterBits(
+          &status_reg, 1, 2);
+      
+      uint32_t timeout = 1000; // 1 second timeout
+      while (timeout-- > 0) {
+        if (drdy_bit.read() == 1) {
+          break;
+        }
+        delay(1);
+      }
+      
+      if (timeout == 0) {
+        return false; // Timeout waiting for DRDY
+      }
+      
+      /* set ODR to 0 */
+      // ctrl1.odr = 0;
+      // ret += sths34pf80_write_reg(ctx, STHS34PF80_CTRL1, (uint8_t *)&ctrl1, 1);
+      if (!odr_bits.write(STHS34PF80_ODR_POWER_DOWN)) {
+        return false;
+      }
+
+      /* reset the DRDY bit */
+      // ret += sths34pf80_read_reg(ctx, STHS34PF80_FUNC_STATUS, (uint8_t *)&func_status, 1);
+      func_status_reg.read(); // Reading clears the DRDY bit again
+    }
+  }
+  
+  // Final ODR set (implied from original function usage context)
+  return odr_bits.write(new_odr);
 }

@@ -110,9 +110,9 @@ void setup() {
     default: Serial.println(F("Unknown")); break;
   }
 
-  // Test Object Temperature Averaging (default: 128 samples)
+  // Test Object Temperature Averaging (default: 32 samples)
   Serial.println(F("\nObject Temperature Averaging:"));
-  if (sths.setObjAveraging(STHS34PF80_AVG_TMOS_128)) {
+  if (sths.setObjAveraging(STHS34PF80_AVG_TMOS_32)) {
     Serial.println(F("  Success"));
   } else {
     Serial.println(F("  Failed"));
@@ -150,9 +150,9 @@ void setup() {
   Serial.print(F("  Current: "));
   Serial.println(sths.getSensitivity());
 
-  // Test Block Data Update (default: false)
+  // Test Block Data Update (default: true)
   Serial.println(F("\nBlock Data Update:"));
-  if (sths.setBlockDataUpdate(false)) {
+  if (sths.setBlockDataUpdate(true)) {
     Serial.println(F("  Success"));
   } else {
     Serial.println(F("  Failed"));
@@ -164,9 +164,9 @@ void setup() {
     Serial.println(F("Disabled"));
   }
 
-  // Test Output Data Rate (default: power-down)
+  // Set Output Data Rate to continuous mode (1 Hz)
   Serial.println(F("\nOutput Data Rate:"));
-  if (sths.setOutputDataRate(STHS34PF80_ODR_POWER_DOWN)) {
+  if (sths.setOutputDataRate(STHS34PF80_ODR_1_HZ)) {
     Serial.println(F("  Success"));
   } else {
     Serial.println(F("  Failed"));
@@ -193,11 +193,16 @@ void setup() {
     Serial.println(F("  Failed"));
   }
 
-  Serial.println(F("\nTrigger One-shot:"));
-  if (sths.triggerOneshot()) {
-    Serial.println(F("  Success"));
+  // Only trigger one-shot if in power-down mode
+  if (sths.getOutputDataRate() == STHS34PF80_ODR_POWER_DOWN) {
+    Serial.println(F("\nTrigger One-shot:"));
+    if (sths.triggerOneshot()) {
+      Serial.println(F("  Success"));
+    } else {
+      Serial.println(F("  Failed"));
+    }
   } else {
-    Serial.println(F("  Failed"));
+    Serial.println(F("\nContinuous mode - no one-shot trigger needed"));
   }
 
   Serial.println(F("\nReboot OTP Memory:"));
@@ -249,5 +254,34 @@ void setup() {
 }
 
 void loop() {
-  delay(1000);
+  if (sths.isDataReady()) {
+    Serial.print("Data ready! ");
+    
+    // Check function status flags
+    if (sths.isPresence()) {
+      Serial.print("PRESENCE ");
+    }
+    if (sths.isMotion()) {
+      Serial.print("MOTION ");
+    }
+    if (sths.isTempShock()) {
+      Serial.print("TEMP_SHOCK ");
+    }
+    
+    // Read temperature and detection data
+    Serial.print("Amb: ");
+    Serial.print(sths.readAmbientTemperature(), 2);
+    Serial.print("°C, Obj: ");
+    Serial.print(sths.readObjectTemperature());
+    Serial.print(", Comp: ");
+    Serial.print(sths.readCompensatedObjectTemperature());
+    Serial.print(", Pres: ");
+    Serial.print(sths.readPresence());
+    Serial.print(", Mot: ");
+    Serial.print(sths.readMotion());
+    Serial.print(", Shock: ");
+    Serial.print(sths.readTempShock());
+    Serial.println();
+  }
+  delay(100);
 }

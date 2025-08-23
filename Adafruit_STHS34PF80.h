@@ -52,6 +52,12 @@
 #define STHS34PF80_REG_TAMB_SHOCK_L 0x3E ///< Ambient shock detection LSB register
 #define STHS34PF80_REG_TAMB_SHOCK_H 0x3F ///< Ambient shock detection MSB register
 
+#define STHS34PF80_REG_FUNC_CFG_ADDR 0x08 ///< Embedded function configuration address register
+#define STHS34PF80_REG_FUNC_CFG_DATA 0x09 ///< Embedded function configuration data register  
+#define STHS34PF80_REG_PAGE_RW 0x11       ///< Page read/write control register
+
+#define STHS34PF80_EMBEDDED_RESET_ALGO 0x2A ///< Embedded function RESET_ALGO register address
+
 #define STHS34PF80_PRES_FLAG 0x04      ///< Presence detection flag
 #define STHS34PF80_MOT_FLAG 0x02       ///< Motion detection flag  
 #define STHS34PF80_TAMB_SHOCK_FLAG 0x01 ///< Ambient temperature shock flag
@@ -126,6 +132,7 @@ public:
   ~Adafruit_STHS34PF80();
 
   bool begin(uint8_t i2c_addr = STHS34PF80_DEFAULT_ADDR, TwoWire *wire = &Wire);
+  bool isConnected();
 
   bool setMotionLowPassFilter(sths34pf80_lpf_config_t config);
   sths34pf80_lpf_config_t getMotionLowPassFilter();
@@ -155,6 +162,8 @@ public:
   bool rebootOTPmemory();
   bool enableEmbeddedFuncPage(bool enable);
   bool triggerOneshot();
+  
+  bool writeEmbeddedFunction(uint8_t addr, uint8_t *data, uint8_t len);
 
   bool setIntPolarity(bool active_low);
   bool setIntOpenDrain(bool open_drain);
@@ -164,8 +173,22 @@ public:
   bool setIntSignal(sths34pf80_int_signal_t signal);
   sths34pf80_int_signal_t getIntSignal();
 
+  bool isDataReady();
+  bool isPresence();
+  bool isMotion();
+  bool isTempShock();
+
+  int16_t readObjectTemperature();
+  float readAmbientTemperature();
+  int16_t readCompensatedObjectTemperature();
+  int16_t readPresence();
+  int16_t readMotion();
+  int16_t readTempShock();
+
 private:
   Adafruit_I2CDevice *i2c_dev;
+  bool safeSetOutputDataRate(sths34pf80_odr_t current_odr, sths34pf80_odr_t new_odr);
+  bool algorithmReset(); // TODO: Implement algorithm reset procedure
 };
 
 #endif
