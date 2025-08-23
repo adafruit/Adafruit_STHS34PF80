@@ -939,9 +939,10 @@ bool Adafruit_STHS34PF80::safeSetOutputDataRate(sths34pf80_odr_t current_odr,
         delay(1);
       }
 
-      if (timeout == 0) {
-        return false; // Timeout waiting for DRDY
-      }
+      // Continue even if DRDY timeout occurs
+      // if (timeout == 0) {
+      //   return false; // Timeout waiting for DRDY
+      // }
 
       /* set ODR to 0 */
       // ctrl1.odr = 0;
