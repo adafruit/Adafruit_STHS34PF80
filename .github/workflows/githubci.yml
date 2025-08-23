@@ -7,11 +7,11 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/setup-python@v1
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
       with:
         python-version: '3.x'
-    - uses: actions/checkout@v2
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
          repository: adafruit/ci-arduino
          path: ci
@@ -25,7 +25,7 @@ jobs:
     - name: test platforms
       run: python3 ci/build_platform.py main_platforms
 
-    - name: doxygen
+    - name: doxy
       env:
         GH_REPO_TOKEN: ${{ secrets.GH_REPO_TOKEN }}
         PRETTYNAME : "Adafruit STHS34PF80 Arduino Library"
