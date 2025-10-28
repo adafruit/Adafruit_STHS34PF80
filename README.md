@@ -1,11 +1,11 @@
 # Adafruit STHS34PF80 Library [![Build Status](https://github.com/adafruit/Adafruit_STHS34PF80/workflows/Arduino%20Library%20CI/badge.svg)](https://github.com/adafruit/Adafruit_STHS34PF80/actions)[![Documentation](https://github.com/adafruit/ci-arduino/blob/master/assets/doxygen_badge.svg)](http://adafruit.github.io/Adafruit_STHS34PF80/html/index.html)
 
-<img src="assets/board.jpg?raw=true" width="500px">
+<a href="https://www.adafruit.com/product/6426"><img src="assets/board.jpg?raw=true" width="500px"></a>
 
 This is the Adafruit STHS34PF80 infrared sensor library for Arduino.
 
 Tested and works great with the Adafruit STHS34PF80 Breakout Board.
-* https://www.adafruit.com/products/
+* https://www.adafruit.com/product/6426
 
 This chip uses I2C to communicate, 2 pins are required to interface.
 
