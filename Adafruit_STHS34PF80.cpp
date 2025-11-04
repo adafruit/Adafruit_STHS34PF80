@@ -8,7 +8,7 @@
  * This is a library for the STHS34PF80 infrared sensor
  *
  * Designed specifically to work with the Adafruit STHS34PF80 breakout:
- *   http://www.adafruit.com/products/
+ *   https://www.adafruit.com/product/6426
  *
  * These sensors use I2C to communicate, 2 pins are required to interface.
  *
